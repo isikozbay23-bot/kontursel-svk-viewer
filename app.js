@@ -171,10 +171,12 @@ function renderPage(manifest) {
 
 // ── Fotoğraf yükleme (çoklu) ──────────────────────────────────────────────
 
+// Fotoğraf bölümü için bekleyen ref/liste (PIN girilince kullanılır)
+let _pendingFoto = null;
+
 function loadFotolar(ref, fotoList) {
     const proxyUrl = window.SVK_PROXY || '';
     const fotoSection = document.getElementById('foto-section');
-    const container = document.getElementById('foto-container');
 
     if (!proxyUrl || !fotoList.length) {
         fotoSection.classList.add('hidden');
@@ -183,12 +185,48 @@ function loadFotolar(ref, fotoList) {
 
     fotoSection.classList.remove('hidden');
     const pin = sessionStorage.getItem('svk-pin') || '';
+
+    if (!pin) {
+        // PIN henüz girilmemiş — kilit ekranı göster
+        _showFotoKilit(ref, fotoList, fotoSection);
+        return;
+    }
+
+    _renderFotolar(ref, fotoList, pin, fotoSection);
+}
+
+function _showFotoKilit(ref, fotoList, fotoSection) {
+    _pendingFoto = { ref, fotoList };
+    const container = document.getElementById('foto-container');
+    container.className = 'foto-container single';
+    container.innerHTML = `
+        <div class="foto-item foto-kilit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="5" y="11" width="14" height="10" rx="2"/>
+                <path stroke-linecap="round" d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+            <p>${fotoList.length} paket fotoğrafı</p>
+            <button class="btn-foto-ac" onclick="fotoKilitAc()">PIN ile Görüntüle</button>
+        </div>`;
+}
+
+function fotoKilitAc() {
+    if (!_pendingFoto) return;
+    // Mevcut PIN modal'ını fotoğraf için aç
+    _pendingDownload = null; // download modunda değil
+    openPinModal();
+    // PIN confirm'i override et — fotoğraf yükleme için
+    document._svkFotoMode = true;
+}
+
+function _renderFotolar(ref, fotoList, pin, fotoSection) {
+    const container = document.getElementById('foto-container');
     const isSingle = fotoList.length === 1;
     container.className = `foto-container${isSingle ? ' single' : ''}`;
     container.innerHTML = '';
 
     fotoList.forEach(fotoAdi => {
-        const fotoUrl = `${proxyUrl}/foto/${encodeURIComponent(ref)}/${encodeURIComponent(fotoAdi)}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`;
+        const fotoUrl = `${window.SVK_PROXY}/foto/${encodeURIComponent(ref)}/${encodeURIComponent(fotoAdi)}?pin=${encodeURIComponent(pin)}`;
 
         const item = document.createElement('div');
         item.className = 'foto-item';
@@ -329,6 +367,21 @@ async function confirmPin() {
     }
 
     errEl.classList.add('hidden');
+
+    // Fotoğraf kilit açma modu
+    if (document._svkFotoMode) {
+        document._svkFotoMode = false;
+        closePinModal();
+        if (_pendingFoto) {
+            const fotoSection = document.getElementById('foto-section');
+            // Önce PIN doğruluğunu kontrol et (dummy foto isteği)
+            const { ref, fotoList } = _pendingFoto;
+            _pendingFoto = null;
+            sessionStorage.setItem('svk-pin', pin);
+            _renderFotolar(ref, fotoList, pin, fotoSection);
+        }
+        return;
+    }
 
     if (!_pendingDownload) {
         closePinModal();
