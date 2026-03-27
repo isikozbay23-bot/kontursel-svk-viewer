@@ -328,10 +328,11 @@ function handleIndir(btn) {
         return;
     }
 
-    // Session'da PIN var mı?
+    // Session'da PIN var mı? — Varsa hemen aç (kullanıcı hareketi bağlamı korunur)
     const pin = sessionStorage.getItem('svk-pin');
     if (pin) {
-        doDownload(btn, ref, dosya, pin);
+        const directUrl = `${proxyUrl}/dl/${encodeURIComponent(ref)}/${encodeURIComponent(dosya)}?pin=${encodeURIComponent(pin)}`;
+        window.open(directUrl, '_blank');
         return;
     }
 
@@ -387,69 +388,18 @@ async function confirmPin() {
         return;
     }
 
-    const { btn, ref, dosya } = _pendingDownload;
-    closePinModal();
+    const { ref, dosya } = _pendingDownload;
+    const proxyUrl = window.SVK_PROXY || '';
 
-    const ok = await doDownload(btn, ref, dosya, pin);
-    if (ok) {
+    if (proxyUrl) {
+        // window.open await'ten ÖNCE çağrılmalı — iOS Safari kullanıcı hareketi bağlamı
+        const directUrl = `${proxyUrl}/dl/${encodeURIComponent(ref)}/${encodeURIComponent(dosya)}?pin=${encodeURIComponent(pin)}`;
+        window.open(directUrl, '_blank');
         sessionStorage.setItem('svk-pin', pin);
     }
-}
 
-async function doDownload(btn, ref, dosya, pin) {
-    const proxyUrl = window.SVK_PROXY || '';
-    if (!proxyUrl) return false;
-
-    btn.classList.add('loading');
-    btn.disabled = true;
-
-    try {
-        // POST /download endpoint (Cloudflare Worker format)
-        const resp = await fetch(`${proxyUrl}/download`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                pin,
-                ref,
-                dosya,
-            }),
-        });
-
-        if (resp.status === 401) {
-            // PIN hatalı
-            sessionStorage.removeItem('svk-pin');
-            _pendingDownload = { btn, ref, dosya };
-            const errEl = document.getElementById('pin-error');
-            errEl.textContent = 'Hatalı PIN. Tekrar deneyin.';
-            errEl.classList.remove('hidden');
-            openPinModal();
-            return false;
-        }
-
-        if (!resp.ok) {
-            alert(`Dosya indirilemedi (${resp.status}). Lütfen tekrar deneyin.`);
-            return false;
-        }
-
-        // Dosyayı indir
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = dosya;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return true;
-
-    } catch (err) {
-        alert('Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
-        return false;
-    } finally {
-        btn.classList.remove('loading');
-        btn.disabled = false;
-    }
+    closePinModal();
+    _pendingDownload = null;
 }
 
 // ── PIN Modal event listeners ───────────────────────────────────────────────
