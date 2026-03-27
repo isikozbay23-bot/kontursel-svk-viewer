@@ -67,22 +67,6 @@ function tipIcon(tipK) {
     </svg>`;
 }
 
-// ── Tema yönetimi ──────────────────────────────────────────────────────────
-
-function initTheme() {
-    const saved = localStorage.getItem('svk-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = saved || (prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('svk-theme', next);
-    });
-}
-
 // ── Görünüm geçişleri ──────────────────────────────────────────────────────
 
 function showState(name) {
@@ -435,11 +419,9 @@ document.getElementById('pin-modal').addEventListener('click', e => {
 // ── Ana giriş noktası ──────────────────────────────────────────────────────
 
 function init() {
-    initTheme();
-
     try {
         const manifest = parseManifest();
-        // Proxy URL'yi QR verisinden oku (index.html'deki sabit config'e göre önceliklidir)
+        // Proxy URL'yi QR verisinden oku
         if (manifest.px) {
             window.SVK_PROXY = manifest.px;
         }
