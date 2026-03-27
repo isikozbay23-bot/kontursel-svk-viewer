@@ -215,6 +215,30 @@ input { font-family: inherit; }
 }
 .foto-error svg { width: 32px; height: 32px; }
 
+/* ── Fotoğraf kilit ekranı ───────────────────────────────────────────────── */
+.foto-kilit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 24px;
+    min-height: 160px;
+    color: var(--text-faint);
+}
+.foto-kilit svg { width: 36px; height: 36px; color: var(--text-faint); }
+.foto-kilit p { font-size: 0.85rem; color: var(--text-muted); }
+.btn-foto-ac {
+    padding: 9px 20px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background var(--transition);
+}
+.btn-foto-ac:hover { background: var(--accent-dark); }
+
 /* ── Çoklu fotoğraf ─────────────────────────────────────────────────────── */
 .foto-container {
     display: flex;
