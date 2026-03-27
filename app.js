@@ -439,6 +439,10 @@ function init() {
 
     try {
         const manifest = parseManifest();
+        // Proxy URL'yi QR verisinden oku (index.html'deki sabit config'e göre önceliklidir)
+        if (manifest.px) {
+            window.SVK_PROXY = manifest.px;
+        }
         renderPage(manifest);
     } catch (err) {
         showError(err.message || 'Bilinmeyen hata oluştu.');
