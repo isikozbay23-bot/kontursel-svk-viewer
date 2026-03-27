@@ -238,8 +238,6 @@ function _renderFotolar(ref, fotoList, pin, fotoSection) {
         const img = document.createElement('img');
         img.className = 'paket-foto hidden';
         img.alt = 'Paket fotoğrafı';
-        img.loading = 'lazy';
-        img.decoding = 'async';
 
         const err = document.createElement('div');
         err.className = 'foto-error hidden';
@@ -259,12 +257,13 @@ function _renderFotolar(ref, fotoList, pin, fotoSection) {
             img.classList.add('hidden');
             err.classList.remove('hidden');
         };
-        img.src = fotoUrl;
 
         item.appendChild(skel);
         item.appendChild(img);
         item.appendChild(err);
         container.appendChild(item);
+        // iOS Safari: img.src DOM'a eklendikten sonra set edilmeli
+        img.src = fotoUrl;
     });
 }
 
